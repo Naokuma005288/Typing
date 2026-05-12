@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>英単語タイピングゲーム</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">English Typing Practice</p>
+        <h1>英単語タイピングゲーム</h1>
+        <p class="lead">画像にあった英単語を、意味を見ながらタイピング練習できるやつ。</p>
+      </div>
+      <div class="stats">
+        <div><span id="score">0</span><small>score</small></div>
+        <div><span id="combo">0</span><small>combo</small></div>
+        <div><span id="left">0</span><small>left</small></div>
+      </div>
+    </section>
+
+    <section class="panel setup">
+      <label>
+        出題数
+        <select id="questionCount">
+          <option value="10">10問</option>
+          <option value="20" selected>20問</option>
+          <option value="999">全部</option>
+        </select>
+      </label>
+      <label>
+        モード
+        <select id="mode">
+          <option value="meaning">意味 → 英語を入力</option>
+          <option value="word">英語 → そのまま入力</option>
+          <option value="mixed">ランダム</option>
+        </select>
+      </label>
+      <button id="startBtn">スタート</button>
+    </section>
+
+    <section class="card">
+      <div class="questionTop">
+        <span id="typeBadge" class="badge">準備OK</span>
+        <span id="judge" class="judge"></span>
+      </div>
+
+      <p id="promptLabel" class="promptLabel">スタートを押して始めよう</p>
+      <h2 id="prompt" class="prompt">意味を見て英単語を打つ練習</h2>
+
+      <div class="targetBox">
+        <span id="typedPreview"></span><span id="remainingPreview"></span>
+      </div>
+
+      <input id="answer" autocomplete="off" autocapitalize="none" spellcheck="false"
+             placeholder="ここにタイプ..." disabled />
+
+      <div class="buttons">
+        <button id="skipBtn" disabled>スキップ</button>
+        <button id="hintBtn" disabled>ヒント</button>
+        <button id="restartBtn">リスタート</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>今回の単語リスト</h3>
+      <div id="wordList" class="wordList"></div>
+    </section>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>
