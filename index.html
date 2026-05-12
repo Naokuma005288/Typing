@@ -17,6 +17,7 @@
       <div class="stats">
         <div><span id="score">0</span><small>score</small></div>
         <div><span id="combo">0</span><small>combo</small></div>
+        <div><span id="miss">0</span><small>miss</small></div>
         <div><span id="left">0</span><small>left</small></div>
       </div>
     </section>
@@ -41,7 +42,7 @@
       <button id="startBtn">スタート</button>
     </section>
 
-    <section class="card">
+    <section class="card" id="gameCard">
       <div class="questionTop">
         <span id="typeBadge" class="badge">準備OK</span>
         <span id="judge" class="judge"></span>
@@ -50,12 +51,16 @@
       <p id="promptLabel" class="promptLabel">スタートを押して始めよう</p>
       <h2 id="prompt" class="prompt">意味を見て英単語を打つ練習</h2>
 
-      <div class="targetBox">
-        <span id="typedPreview"></span><span id="remainingPreview"></span>
+      <div class="targetBox" aria-live="polite">
+        <span id="typedPreview"></span><span id="currentPreview"></span><span id="remainingPreview"></span>
       </div>
 
-      <input id="answer" autocomplete="off" autocapitalize="none" spellcheck="false"
-             placeholder="ここにタイプ..." disabled />
+      <div class="inputWrap">
+        <input id="answer" lang="en" autocomplete="off" autocorrect="off" autocapitalize="none"
+               inputmode="latin" enterkeyhint="next" spellcheck="false"
+               placeholder="ここにタイプ..." disabled />
+        <p class="inputHint" id="inputHint">ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。</p>
+      </div>
 
       <div class="buttons">
         <button id="skipBtn" disabled>スキップ</button>

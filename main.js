@@ -326,17 +326,21 @@ const $ = (id) => document.getElementById(id);
 const els = {
   score: $("score"),
   combo: $("combo"),
+  miss: $("miss"),
   left: $("left"),
   questionCount: $("questionCount"),
   mode: $("mode"),
   startBtn: $("startBtn"),
+  gameCard: $("gameCard"),
   typeBadge: $("typeBadge"),
   judge: $("judge"),
   promptLabel: $("promptLabel"),
   prompt: $("prompt"),
   typedPreview: $("typedPreview"),
+  currentPreview: $("currentPreview"),
   remainingPreview: $("remainingPreview"),
   answer: $("answer"),
+  inputHint: $("inputHint"),
   skipBtn: $("skipBtn"),
   hintBtn: $("hintBtn"),
   restartBtn: $("restartBtn"),
@@ -349,9 +353,23 @@ let currentMode = "meaning";
 let score = 0;
 let combo = 0;
 let mistakes = 0;
+let lockedValue = "";
+let missTimer = null;
 
 function normalize(text) {
   return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function sameChar(a, b) {
+  return String(a).toLowerCase() === String(b).toLowerCase();
+}
+
+function isCorrectPrefix(value, target) {
+  if (value.length > target.length) return false;
+  for (let i = 0; i < value.length; i++) {
+    if (!sameChar(value[i], target[i])) return false;
+  }
+  return true;
 }
 
 function shuffle(array) {
@@ -361,6 +379,10 @@ function shuffle(array) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function visibleChar(ch) {
+  return ch === " " ? "␣" : ch;
 }
 
 function renderWordList(list = WORDS) {
@@ -375,7 +397,37 @@ function renderWordList(list = WORDS) {
 function setStats() {
   els.score.textContent = score;
   els.combo.textContent = combo;
+  els.miss.textContent = mistakes;
   els.left.textContent = deck.length + (current ? 1 : 0);
+}
+
+function flashMiss(message = "ミスタイプ！入力は反映してへんで") {
+  mistakes++;
+  combo = 0;
+  setStats();
+
+  els.judge.textContent = "MISS!";
+  els.judge.className = "judge bad";
+  els.inputHint.textContent = message;
+  els.inputHint.className = "inputHint missText";
+
+  els.gameCard.classList.remove("missFlash");
+  els.answer.classList.remove("missInput");
+  void els.gameCard.offsetWidth;
+  els.gameCard.classList.add("missFlash");
+  els.answer.classList.add("missInput");
+
+  clearTimeout(missTimer);
+  missTimer = setTimeout(() => {
+    els.gameCard.classList.remove("missFlash");
+    els.answer.classList.remove("missInput");
+    els.inputHint.textContent = "ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。";
+    els.inputHint.className = "inputHint";
+    if (els.judge.textContent === "MISS!") {
+      els.judge.textContent = "";
+      els.judge.className = "judge";
+    }
+  }, 650);
 }
 
 function startGame() {
@@ -384,11 +436,14 @@ function startGame() {
   score = 0;
   combo = 0;
   mistakes = 0;
+  lockedValue = "";
   els.answer.disabled = false;
   els.skipBtn.disabled = false;
   els.hintBtn.disabled = false;
   els.judge.textContent = "";
   els.judge.className = "judge";
+  els.inputHint.textContent = "ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。";
+  els.inputHint.className = "inputHint";
   nextQuestion();
 }
 
@@ -400,8 +455,10 @@ function chooseMode() {
 
 function nextQuestion() {
   current = deck.shift() || null;
+  lockedValue = "";
   els.answer.value = "";
   els.typedPreview.textContent = "";
+  els.currentPreview.textContent = "";
   els.remainingPreview.textContent = "";
 
   if (!current) {
@@ -421,76 +478,104 @@ function nextQuestion() {
   els.prompt.textContent = currentMode === "meaning" ? current.meaning : current.word;
   updatePreview();
   setStats();
-  els.answer.focus();
+  requestAnimationFrame(() => els.answer.focus());
 }
 
 function updatePreview() {
   if (!current) return;
   const target = current.word;
-  const typed = els.answer.value;
-  let okLen = 0;
+  const typed = lockedValue;
+  const next = target[typed.length] ?? "";
+  const rest = target.slice(typed.length + 1);
 
-  for (let i = 0; i < typed.length && i < target.length; i++) {
-    if (typed[i].toLowerCase() === target[i].toLowerCase()) okLen++;
-    else break;
-  }
-
-  els.typedPreview.textContent = target.slice(0, okLen);
-  els.remainingPreview.textContent = target.slice(okLen);
+  els.typedPreview.textContent = typed;
+  els.currentPreview.textContent = next ? visibleChar(next) : "";
+  els.remainingPreview.textContent = rest;
 }
 
-function checkAnswer() {
-  if (!current) return;
+function completeQuestion() {
+  combo++;
+  score += 100 + combo * 10;
+  els.judge.textContent = "OK!";
+  els.judge.className = "judge good";
+  setStats();
+  setTimeout(nextQuestion, 220);
+}
+
+function acceptValue(value) {
+  lockedValue = value;
+  els.answer.value = lockedValue;
   updatePreview();
 
-  const typed = normalize(els.answer.value);
-  const target = normalize(current.word);
-
-  if (typed === target) {
-    combo++;
-    score += 100 + combo * 10;
-    els.judge.textContent = "OK!";
-    els.judge.className = "judge good";
-    setTimeout(nextQuestion, 260);
-  } else if (typed.length >= target.length && !target.startsWith(typed)) {
-    mistakes++;
-    combo = 0;
-    els.judge.textContent = "ちょい違う！";
-    els.judge.className = "judge bad";
-    setStats();
+  if (current && normalize(lockedValue) === normalize(current.word)) {
+    completeQuestion();
   } else {
     els.judge.textContent = "";
     els.judge.className = "judge";
   }
 }
 
+function handleInput() {
+  if (!current) return;
+
+  const target = current.word;
+  const nextValue = els.answer.value;
+
+  if (isCorrectPrefix(nextValue, target)) {
+    acceptValue(nextValue);
+    return;
+  }
+
+  // 間違った文字は入力欄に残さない
+  els.answer.value = lockedValue;
+  updatePreview();
+  flashMiss("ミスタイプ！今の文字は入れてへんで");
+}
+
 function skipQuestion() {
   if (!current) return;
-  mistakes++;
-  combo = 0;
-  els.judge.textContent = `答え: ${current.word}`;
-  els.judge.className = "judge bad";
-  setStats();
-  setTimeout(nextQuestion, 750);
+  flashMiss(`スキップ：答えは「${current.word}」`);
+  setTimeout(nextQuestion, 760);
 }
 
 function showHint() {
   if (!current) return;
-  const answer = els.answer.value;
-  const nextChar = current.word[answer.length] ?? "";
-  els.answer.value = answer + nextChar;
+  const target = current.word;
+  if (lockedValue.length >= target.length) return;
+  const nextValue = target.slice(0, lockedValue.length + 1);
+  acceptValue(nextValue);
   combo = 0;
-  updatePreview();
+  setStats();
+  els.inputHint.textContent = "ヒントを1文字入れたで。コンボはリセット！";
+  els.inputHint.className = "inputHint";
   els.answer.focus();
+}
+
+function blockPaste(e) {
+  if (els.answer.disabled) return;
+  e.preventDefault();
+  flashMiss("ペーストはなしで、タイピング練習しよ！");
+}
+
+function focusInput() {
+  if (!els.answer.disabled) els.answer.focus();
 }
 
 els.startBtn.addEventListener("click", startGame);
 els.restartBtn.addEventListener("click", startGame);
 els.skipBtn.addEventListener("click", skipQuestion);
 els.hintBtn.addEventListener("click", showHint);
-els.answer.addEventListener("input", checkAnswer);
+els.answer.addEventListener("input", handleInput);
+els.answer.addEventListener("paste", blockPaste);
+els.answer.addEventListener("drop", (e) => e.preventDefault());
 els.answer.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") checkAnswer();
+  if (e.key === "Enter" && current && normalize(lockedValue) === normalize(current.word)) {
+    completeQuestion();
+  }
+});
+els.gameCard.addEventListener("click", focusInput);
+document.addEventListener("keydown", (e) => {
+  if (e.key.length === 1 || e.key === "Backspace") focusInput();
 });
 
 renderWordList();
