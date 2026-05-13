@@ -321,6 +321,7 @@ const WORDS = [
   }
 ];
 
+
 const $ = (id) => document.getElementById(id);
 
 const els = {
@@ -349,7 +350,7 @@ const els = {
 
 let deck = [];
 let current = null;
-let currentMode = "meaning";
+let currentMode = "jpToEn";
 let score = 0;
 let combo = 0;
 let mistakes = 0;
@@ -401,6 +402,17 @@ function setStats() {
   els.left.textContent = deck.length + (current ? 1 : 0);
 }
 
+function resetMissUI() {
+  els.gameCard.classList.remove("missFlash");
+  els.answer.classList.remove("missInput");
+  els.inputHint.textContent = "ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。";
+  els.inputHint.className = "inputHint";
+  if (els.judge.textContent === "MISS!") {
+    els.judge.textContent = "";
+    els.judge.className = "judge";
+  }
+}
+
 function flashMiss(message = "ミスタイプ！入力は反映してへんで") {
   mistakes++;
   combo = 0;
@@ -418,16 +430,7 @@ function flashMiss(message = "ミスタイプ！入力は反映してへんで")
   els.answer.classList.add("missInput");
 
   clearTimeout(missTimer);
-  missTimer = setTimeout(() => {
-    els.gameCard.classList.remove("missFlash");
-    els.answer.classList.remove("missInput");
-    els.inputHint.textContent = "ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。";
-    els.inputHint.className = "inputHint";
-    if (els.judge.textContent === "MISS!") {
-      els.judge.textContent = "";
-      els.judge.className = "judge";
-    }
-  }, 650);
+  missTimer = setTimeout(resetMissUI, 650);
 }
 
 function startGame() {
@@ -442,14 +445,13 @@ function startGame() {
   els.hintBtn.disabled = false;
   els.judge.textContent = "";
   els.judge.className = "judge";
-  els.inputHint.textContent = "ミスタイプは入力欄に入らず、赤いフラッシュで分かるようにしたで。";
-  els.inputHint.className = "inputHint";
+  resetMissUI();
   nextQuestion();
 }
 
 function chooseMode() {
   const mode = els.mode.value;
-  if (mode === "mixed") return Math.random() < 0.5 ? "meaning" : "word";
+  if (mode === "mixed") return Math.random() < 0.5 ? "jpToEn" : "enTyping";
   return mode;
 }
 
@@ -474,8 +476,15 @@ function nextQuestion() {
 
   currentMode = chooseMode();
   els.typeBadge.textContent = current.type;
-  els.promptLabel.textContent = currentMode === "meaning" ? "この意味の英語を入力" : "この英語をそのまま入力";
-  els.prompt.textContent = currentMode === "meaning" ? current.meaning : current.word;
+
+  if (currentMode === "jpToEn") {
+    els.promptLabel.textContent = "この日本語の意味に合う英単語を入力";
+    els.prompt.textContent = current.meaning;
+  } else {
+    els.promptLabel.textContent = "この英単語をそのまま入力";
+    els.prompt.textContent = current.word;
+  }
+
   updatePreview();
   setStats();
   requestAnimationFrame(() => els.answer.focus());
@@ -510,6 +519,7 @@ function acceptValue(value) {
   if (current && normalize(lockedValue) === normalize(current.word)) {
     completeQuestion();
   } else {
+    if (els.judge.textContent === "MISS!") return;
     els.judge.textContent = "";
     els.judge.className = "judge";
   }
@@ -526,7 +536,6 @@ function handleInput() {
     return;
   }
 
-  // 間違った文字は入力欄に残さない
   els.answer.value = lockedValue;
   updatePreview();
   flashMiss("ミスタイプ！今の文字は入れてへんで");
