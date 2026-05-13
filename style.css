@@ -100,6 +100,7 @@ h1 {
   align-items: end;
   margin-bottom: 18px;
   padding: 16px;
+  flex-wrap: wrap;
 }
 
 label {
@@ -108,7 +109,29 @@ label {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
-  flex: 1;
+  flex: 1 1 220px;
+}
+
+.toggle {
+  min-width: 250px;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--text);
+}
+
+.toggleRow input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
 }
 
 select, input, button {
@@ -212,6 +235,27 @@ button:disabled { opacity: .42; cursor: not-allowed; transform: none; }
   letter-spacing: .03em;
   overflow-wrap: anywhere;
   font-variant-ligatures: none;
+}
+
+.targetBox.hiddenMode {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(255,255,255,.9);
+}
+
+.hiddenModeText {
+  font-size: clamp(18px, 3.8vw, 28px);
+  line-height: 1.4;
+}
+
+.hiddenModeSub {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  color: rgba(255,255,255,.62);
+  font-weight: 700;
+  letter-spacing: normal;
 }
 
 #typedPreview { color: #7dd3fc; }

@@ -31,6 +31,7 @@
           <option value="999">全部</option>
         </select>
       </label>
+
       <label>
         モード
         <select id="mode">
@@ -39,6 +40,15 @@
           <option value="mixed">ランダム</option>
         </select>
       </label>
+
+      <label class="toggle">
+        <span>追加設定</span>
+        <div class="toggleRow">
+          <input id="hideEnglishMode" type="checkbox" />
+          <span>日本語 → 英単語で英単語を隠す</span>
+        </div>
+      </label>
+
       <button id="startBtn">スタート</button>
     </section>
 
@@ -51,7 +61,7 @@
       <p id="promptLabel" class="promptLabel">スタートを押して始めよう</p>
       <h2 id="prompt" class="prompt">意味を見て英単語を打つ練習</h2>
 
-      <div class="targetBox" aria-live="polite">
+      <div class="targetBox" id="targetBox" aria-live="polite">
         <span id="typedPreview"></span><span id="currentPreview"></span><span id="remainingPreview"></span>
       </div>
 
